@@ -6,11 +6,13 @@
   "scripts": {
     "build": "node utils/build.js",
     "start": "node utils/webserver.js",
-    "prettier": "prettier --write '**/*.{js,jsx,ts,tsx,json,css,scss,md}'"
+    "prettier": "prettier --write '**/*.{js,jsx,ts,tsx,json,css,scss,md}'",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "@ffmpeg/ffmpeg": "^0.12.4",
     "@ffmpeg/util": "^0.12.0",
+    "patch-package": "^8.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
