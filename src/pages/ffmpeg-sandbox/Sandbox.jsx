@@ -38,17 +38,19 @@ function FfmpegTest() {
       '+genpts',
       'output.webm',
     ]);
-    const data = await ffmpeg.readFile('output.webm');
 
+    ffmpeg.deleteFile('input.webm')
+    const data = await ffmpeg.readFile('output.webm');
+    ffmpeg.deleteFile('output.webm')
 
     window.top.postMessage(
       {
         type: 'msg',
         data: data,
       },
-      '*'
+      '*',
+      [data.buffer]
     );
-
   };
 
   useEffect(() => {
