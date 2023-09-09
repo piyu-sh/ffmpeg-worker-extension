@@ -70,7 +70,7 @@ function FfmpegTest() {
 
   return loaded ? (
     <>
-      <video ref={videoRef} controls></video>
+      {/* <video ref={videoRef} controls></video> */}
       <br />
       <button onClick={transcode}>Transcode</button>
       <p ref={messageRef}></p>
