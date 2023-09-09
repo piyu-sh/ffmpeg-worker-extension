@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
 
@@ -12,7 +12,7 @@ function FfmpegTest() {
     const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.2/dist/umd';
     const ffmpeg = ffmpegRef.current;
     ffmpeg.on('log', ({ message }) => {
-      messageRef.current.innerHTML = message;
+      console.log("🚀 ~ file: Sandbox.jsx:17 ~ ffmpeg.on ~ message:", message)
     });
     // toBlobURL is used to bypass CORS issue, urls with the same
     // domain can be used directly.
@@ -28,26 +28,53 @@ function FfmpegTest() {
 
   const transcode = async () => {
     const ffmpeg = ffmpegRef.current;
-    await ffmpeg.writeFile(
-      'input.avi',
-      await fetchFile('/video/video-15s.avi')
+
+    await ffmpeg.exec([
+      '-i',
+      'input.webm',
+      '-c',
+      'copy',
+      '-fflags',
+      '+genpts',
+      'output.webm',
+    ]);
+    const data = await ffmpeg.readFile('output.webm');
+
+
+    window.top.postMessage(
+      {
+        type: 'msg',
+        data: data,
+      },
+      '*'
     );
-    await ffmpeg.exec(['-i', 'input.avi', 'output.mp4']);
-    const data = await ffmpeg.readFile('output.mp4');
-    videoRef.current.src = URL.createObjectURL(
-      new Blob([data.buffer], { type: 'video/mp4' })
-    );
+
   };
+
+  useEffect(() => {
+    window.onmessage = async function (e) {
+      if (e.data.type == 'msg') {
+        await load()
+
+        const ffmpeg = ffmpegRef.current;
+        await ffmpeg.writeFile(
+          'input.webm',
+          new Uint8Array(e.data.data)
+        );
+
+      }
+    };
+  }, [])
 
   return loaded ? (
     <>
       <video ref={videoRef} controls></video>
       <br />
-      <button onClick={transcode}>Transcode avi to mp4</button>
+      <button onClick={transcode}>Transcode</button>
       <p ref={messageRef}></p>
     </>
   ) : (
-    <button onClick={load}>Load ffmpeg-core</button>
+    <></>
   );
 }
 
