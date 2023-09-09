@@ -1,8 +1,8 @@
 diff --git a/node_modules/@ffmpeg/ffmpeg/dist/esm/classes.js b/node_modules/@ffmpeg/ffmpeg/dist/esm/classes.js
-index 89b9923..22d084b 100644
+index 89b9923..996d7c2 100644
 --- a/node_modules/@ffmpeg/ffmpeg/dist/esm/classes.js
 +++ b/node_modules/@ffmpeg/ffmpeg/dist/esm/classes.js
-@@ -93,9 +93,12 @@ export class FFmpeg {
+@@ -93,11 +93,13 @@ export class FFmpeg {
       * @category FFmpeg
       * @returns `true` if ffmpeg core is loaded for the first time.
       */
@@ -10,10 +10,112 @@ index 89b9923..22d084b 100644
 +    load = async (config = {}) => {
          if (!this.#worker) {
 -            this.#worker = new Worker(new URL("./worker.js", import.meta.url), {
+-                type: "module",
+-            });
 +            const res = await fetch(new URL("./worker.js", import.meta.url))
 +            const content = await res.text()
 +            const blob = new Blob([content], { type: "text/javascript" })
-+            this.#worker = new Worker(URL.createObjectURL(blob), {
-                 type: "module",
-             });
++            this.#worker = new Worker(URL.createObjectURL(blob)
++            );
              this.#registerHandlers();
+         }
+         return this.#send({
+@@ -126,17 +128,17 @@ export class FFmpeg {
+      * @category FFmpeg
+      */
+     exec = (
+-    /** ffmpeg command line args */
+-    args, 
+-    /**
+-     * milliseconds to wait before stopping the command execution.
+-     *
+-     * @defaultValue -1
+-     */
+-    timeout = -1) => this.#send({
+-        type: FFMessageType.EXEC,
+-        data: { args, timeout },
+-    });
++        /** ffmpeg command line args */
++        args,
++        /**
++         * milliseconds to wait before stopping the command execution.
++         *
++         * @defaultValue -1
++         */
++        timeout = -1) => this.#send({
++            type: FFMessageType.EXEC,
++            data: { args, timeout },
++        });
+     /**
+      * Terminate all ongoing API calls and terminate web worker.
+      * `FFmpeg.load()` must be called again before calling any other APIs.
+@@ -193,17 +195,17 @@ export class FFmpeg {
+      * @category File System
+      */
+     readFile = (path,
+-    /**
+-     * File content encoding, supports two encodings:
+-     * - utf8: read file as text file, return data in string type.
+-     * - binary: read file as binary file, return data in Uint8Array type.
+-     *
+-     * @defaultValue binary
+-     */
+-    encoding = "binary") => this.#send({
+-        type: FFMessageType.READ_FILE,
+-        data: { path, encoding },
+-    });
++        /**
++         * File content encoding, supports two encodings:
++         * - utf8: read file as text file, return data in string type.
++         * - binary: read file as binary file, return data in Uint8Array type.
++         *
++         * @defaultValue binary
++         */
++        encoding = "binary") => this.#send({
++            type: FFMessageType.READ_FILE,
++            data: { path, encoding },
++        });
+     /**
+      * Delete a file.
+      *
+diff --git a/node_modules/@ffmpeg/ffmpeg/dist/esm/worker.js b/node_modules/@ffmpeg/ffmpeg/dist/esm/worker.js
+index 486638a..cd5eb3c 100644
+--- a/node_modules/@ffmpeg/ffmpeg/dist/esm/worker.js
++++ b/node_modules/@ffmpeg/ffmpeg/dist/esm/worker.js
+@@ -1,8 +1,34 @@
+ /// <reference no-default-lib="true" />
+ /// <reference lib="esnext" />
+ /// <reference lib="webworker" />
+-import { CORE_URL, FFMessageType } from "./const.js";
+-import { ERROR_UNKNOWN_MESSAGE_TYPE, ERROR_NOT_LOADED, ERROR_IMPORT_FAILURE, } from "./errors.js";
++
++const CORE_VERSION = "0.12.1";
++
++const CORE_URL = `https://unpkg.com/@ffmpeg/core@${CORE_VERSION}/dist/umd/ffmpeg-core.js`;
++var FFMessageType;
++(function (FFMessageType) {
++    FFMessageType["LOAD"] = "LOAD";
++    FFMessageType["EXEC"] = "EXEC";
++    FFMessageType["WRITE_FILE"] = "WRITE_FILE";
++    FFMessageType["READ_FILE"] = "READ_FILE";
++    FFMessageType["DELETE_FILE"] = "DELETE_FILE";
++    FFMessageType["RENAME"] = "RENAME";
++    FFMessageType["CREATE_DIR"] = "CREATE_DIR";
++    FFMessageType["LIST_DIR"] = "LIST_DIR";
++    FFMessageType["DELETE_DIR"] = "DELETE_DIR";
++    FFMessageType["ERROR"] = "ERROR";
++    FFMessageType["DOWNLOAD"] = "DOWNLOAD";
++    FFMessageType["PROGRESS"] = "PROGRESS";
++    FFMessageType["LOG"] = "LOG";
++})(FFMessageType || (FFMessageType = {}));
++
++
++const ERROR_UNKNOWN_MESSAGE_TYPE = new Error("unknown message type");
++const ERROR_NOT_LOADED = new Error("ffmpeg is not loaded, call `await ffmpeg.load()` first");
++const ERROR_TERMINATED = new Error("called FFmpeg.terminate()");
++const ERROR_IMPORT_FAILURE = new Error("failed to import ffmpeg-core.js");
++
++
+ let ffmpeg;
+ const load = async ({ coreURL: _coreURL = CORE_URL, wasmURL: _wasmURL, workerURL: _workerURL, }) => {
+     const first = !ffmpeg;
