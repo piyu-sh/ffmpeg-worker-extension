@@ -16,6 +16,10 @@ window.onmessage = function (e) {
       downloadId => {
         if (downloadId) {
           URL.revokeObjectURL(blobUrl);
+          const ffmpegIframe = document.getElementById(
+            'theFrame'
+          );
+          ffmpegIframe.src = ffmpegIframe.src // reload iframe to free memory
         } else {
           console.error('🚀 ~ download failed');
         }
@@ -40,7 +44,8 @@ const Newtab = () => {
         type: 'msg',
         data: fileAB,
       },
-      '*'
+      '*',
+      [fileAB]
     );
 
   }
