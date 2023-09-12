@@ -55,6 +55,6 @@
     ]
   },
   "content_security_policy": {
-    "sandbox": "sandbox allow-scripts allow-forms allow-popups allow-modals allow-top-navigation; script-src-elem  'unsafe-eval' 'unsafe-inline' 'self' blob: ; object-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; child-src 'self'; worker-src 'self' blob: ;"
+    "sandbox": "sandbox allow-scripts;"
   }
 }
